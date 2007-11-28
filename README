@@ -1,0 +1,47 @@
+XRI
+
+XRI 2.0 resolver library, including an XRDS parser (a subset of which
+is used for Yadis).  May be used for resolving i-names and beyond.
+
+This is basically a port of Victor Grey and Kermit Snelson's ruby barx
+code, including a Perl-ish implementation of their API.  Much love and
+credit go to Fen Labalme, whose original XRI Perl library was the very
+first implementation of the XRI specification.
+
+Pertinent links:
+
+    barx
+      http://xrisoft.org/
+
+    XRI spec
+      http://www.oasis-open.org/committees/tc_home.php?wg_abbrev=xri
+
+    i-names
+      http://www.inames.net/
+
+    Yadis
+      http://yadis.org/
+
+INSTALLATION
+
+To install this module, run the following commands:
+
+	perl Makefile.PL
+	make
+	make test
+	make install
+
+SUPPORT AND DOCUMENTATION
+
+After installing, you can find documentation for this module with the
+perldoc command.
+
+    perldoc XRI
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2007 Blue Oxen Associates
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
