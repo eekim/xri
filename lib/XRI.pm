@@ -1,107 +1,129 @@
 package XRI;
-
-use warnings;
 use strict;
+use warnings;
+use Class::Field qw(field);
+use Error qw(try);
+use Text::Balanced qw(extract_bracketed);
 
-=head1 NAME
+our $VERSION = '2.0';
 
-XRI - The great new XRI!
+field 'root', -init => "''";
+field 'segments', -init => "[]";
+field 'path', -init => "''";
+field 'query', -init => "''";
+field 'fragment', -init => "''";
 
-=head1 VERSION
+our @GCS = qw(= @ + $ !);  
+our @SEG_SEP = qw(* !);      # Segment delims (e.g. foo*bar, foo!bar)
+our @SEC_DELIM = ('/', '#', '?');  # Section delims (i.e. path, query, fragments)
+our @DELIMS = (@GCS, @SEG_SEP, @SEC_DELIM);
+our $delim_rx = "[" . join("", map quotemeta, @DELIMS) . "]";
+our $not_delim_rx = "[^" . join("", map quotemeta, @DELIMS) . "]";
 
-Version 1.0
+sub new {
+    my ($class, $xri) = @_;
 
-=cut
+    unless (defined $xri) {
+        throw XRI::Exception::ExpectedXRI(
+            "XRI->new() expects an XRI as an argument"
+        );
+    }
 
-our $VERSION = '1.0';
-
-
-=head1 SYNOPSIS
-
-Quick summary of what the module does.
-
-Perhaps a little code snippet.
-
-    use XRI;
-
-    my $foo = XRI->new();
-    ...
-
-=head1 EXPORT
-
-A list of functions that can be exported.  You can delete this section
-if you don't export anything, such as for a purely object-oriented module.
-
-=head1 FUNCTIONS
-
-=head2 function1
-
-=cut
-
-sub function1 {
+    my $self = bless({xri => $xri}, $class);
+    $self->_parse;
+    return $self;
 }
 
-=head2 function2
+sub _parse {
+    my $self = shift;
+    my $xri = $self->{xri};
 
-=cut
+    # Strip the scheme
+    $xri =~ s{^xri:(//)?}{};
 
-sub function2 {
+    # Pop the first char
+    my $root = substr($xri, 0, 1);
+    substr($xri, 0, 1) = "";
+
+    # Ensure the root is a valid GCS character
+    unless (is_member($root, @GCS)) {
+        throw XRI::Exception::InvalidXRI("Root not found in $xri");
+    }
+
+    # Assert that XRIs that start w/ "!" have a subsequent "!"
+    my $char = substr($xri, 0, 1);
+    if ($root eq '!' and $char ne '!') {
+        throw XRI::Exception::InvalidXRI(
+            "URIs with root GCS of ! must have ! as next char."
+        );
+    }
+
+    # Ensure we add delim char.  Compressed root syntax does not call for it,
+    # but the parser below expects it.  E.g. "=eekim" is really "=*eekim".
+    $xri = "*" . $xri unless $xri =~ /^$delim_rx/;
+
+    my $segments = [];
+    while (length $xri) {
+        if ($xri =~ /^$delim_rx\(/) {
+            my $delim  = remove_first_char($xri);
+            my $xref = extract_bracketed($xri, "()");
+            unless (defined $xref) {
+                throw XRI::Exception::InvalidXRI(
+                    "Unbalanced parentheses in XRI at \"$xri\" in " . $self->{xri}
+                );
+            }
+            push @$segments, $delim . $xref;
+        } elsif ($xri =~ m{^(?:/|\?|\#)}) { # FIXME: delims are repeated here and elsewhere
+            last;  # Reached the end of the authority
+        } elsif ($xri =~ s/^($delim_rx$not_delim_rx+)//) {
+            my $segment = $1;
+            $self->assert_segment_ok($segment);
+            push @$segments, $segment;
+        } else {
+            throw XRI::Exception::InvalidXRI(
+                "Parse error \"$xri\" in " . $self->{xri}
+            );
+        }
+    }
+
+    my ($path, $query) = split /\?/, $xri, 2;
+    ($query, my $fragment) = split /#/, $xri, 2;
+    $self->segments($segments);
+    $self->root($root) if defined $root;
+    $self->path($path) if defined $path;
+    $self->query($query) if defined $query;
+    $self->fragment($fragment) if defined $fragment;
 }
 
-=head1 AUTHOR
+sub assert_segment_ok {
+    my ($self, $segment) = @_;
 
-Eugene Eric Kim, C<< <eekim at blueoxen.com> >>
+    # FIXME: Check for other kinds of badness too.  E.g. more unescaped chars.
+    # FIXME: delims are repeated here and elsewhere
+    return unless $segment =~ m{\(|\)|/|\?|#/};
 
-=head1 BUGS
+    throw XRI::Exception::InvalidXRI(
+        "Segment appears malformed: $segment"
+    );
+}
 
-Please report any bugs or feature requests to C<bug-xri at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=XRI>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+sub remove_first_char {
+    my $c = substr($_[0], 0, 1);
+    substr($_[0], 0, 1) = "";
+    return $c;
+}
 
-
-
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc XRI
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=XRI>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/XRI>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/XRI>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/XRI>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright 2007 Blue Oxen Associates, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-
-=cut
+sub is_member {
+    my ($char, @list) = @_;
+    return grep { $_ eq $char } @list;
+}
 
 1; # End of XRI
+
+package XRI::Exception::ExpectedXRI;
+use base qw(Error::Simple);
+
+package XRI::Exception::InvalidXRI;
+use base qw(Error::Simple);
+
+__END__

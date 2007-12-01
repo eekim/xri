@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XRDS ref="xri://=example" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*example</Query>
+  <Status code="100"/>
+  <CanonicalID priority="10">=!1234.5678</CanonicalID>
+ </XRD>
+</XRDS>

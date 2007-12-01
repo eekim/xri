@@ -1,0 +1,5 @@
+---
+- "@!!i_have_an_empty_segment"
+- "!i_should_have_two_bangs"
+- "i_do_not_start_with_a_gcs"
+- "=cows(foo)bar"

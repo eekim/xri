@@ -1,0 +1,83 @@
+---
+# Test case format:
+#   *NOTE* path/query/fragment parts not implemented yet
+#   *NOTE* segments is ONLY for the authority part
+#
+# "xri://some.xri.here":
+#     root: the-root-GCS (e.g. "=")
+#     segments: 
+#         - segment-one-of-the-authority
+#         - segment-two-of-the-authority
+#         - ...
+#     path: path-here
+#     query: query-string-here
+#     fragment: fragment-identifier-here
+"!!1001":
+    root: "!"
+    segments: 
+        - "!1001"
+"xri://=!9C9D.73FC.7768.6268":
+    root: "="
+    segments:
+        - "!9C9D.73FC.7768.6268"
+"=!9C9D.73FC.7768.6268!1002":
+    root: "="
+    segments: 
+        - "!9C9D.73FC.7768.6268"
+        - "!1002"
+"=eekim":
+   root: "="
+   segments:
+      - "*eekim"
+"xri://=eekim*foo":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*foo"
+"=eekim*foo*bar":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*foo"
+      - "*bar"
+"=eekim*(=moconnor)":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*(=moconnor)"
+"=eekim*(=moconnor*foo)":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*(=moconnor*foo)"
+"=eekim*(=moconnor*(=drummond))":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*(=moconnor*(=drummond))"
+"=eekim*(http://moconnor.livejournal.com/)*foo":
+   root: "="
+   segments:
+      - "*eekim"
+      - "*(http://moconnor.livejournal.com/)"
+      - "*foo"
+"@(=eekim)*foo":
+   root: "@"
+   segments:
+      - "*(=eekim)"
+      - "*foo"
+"@(=eekim)*foo/foo*bar/*baz":
+    root: "@"
+    segments:
+        - "*(=eekim)"
+        - "*foo"
+"@(=eekim)*foo/foo*bar/*baz":
+    root: "@"
+    segments:
+        - "*(=eekim)"
+        - "*foo"
+"@(=eekim)*foo?foo=1":
+    root: "@"
+    segments:
+        - "*(=eekim)"
+        - "*foo"
