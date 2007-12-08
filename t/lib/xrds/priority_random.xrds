@@ -1,0 +1,20 @@
+<!--
+
+Multiple LocalIDs with the same priority.  The equivalent priorities should be
+sorted randomly.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<XRDS ref="xri://=foo" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*foo</Query>
+  <Status code="100"/>
+  <Expires>2007-12-01T00:00:00.000Z</Expires>
+  <ProviderID>xri://=</ProviderID>
+  <LocalID priority="20">!4001.1001.1001.1001</LocalID>
+  <LocalID priority="10">!2001.1001.1001.1001</LocalID>
+  <LocalID priority="10">!3001.1001.1001.1001</LocalID>
+  <LocalID priority="10">!1001.1001.1001.1001</LocalID>
+  <CanonicalID>=!1001.1001.1001.1001</CanonicalID>
+ </XRD>
+</XRDS>

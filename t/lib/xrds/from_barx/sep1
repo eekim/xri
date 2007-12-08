@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XRDS ref="xri://=example" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*example</Query>
+  <Status code="100"/>
+  <CanonicalID priority="10">=!1234.5678</CanonicalID>
+  
+  <Service priority="9">
+   <Type match="null"/>
+   <Type select="true">xri://+i-service*(+forwarding)*($v*1.0)</Type>
+   <Path match="default"/>
+   <Path select="true">(+index)</Path>
+   <URI append="qxri">http://example.com/forwarding/</URI>
+  </Service>
+  
+  <Service priority="10">
+   <Type select="true">http://openid.net/signon/1.0</Type>
+   <URI append="qxri" priority="20">http://example.com/openid/</URI>
+   <URI append="qxri" priority="10">https://example.com/openid/</URI>
+  </Service>
+  
+  <Service priority="10">
+   <Type select="true">xri://+i-service*(+contact)*($v*1.0)</Type>
+   <Type match="default"/>
+   <Path select="true">(+contact)</Path>
+   <Path match="null"/>
+   <URI append="qxri" priority="1">http://example.com/contact/</URI>
+  </Service>
+  
+ </XRD>
+</XRDS>

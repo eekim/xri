@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XRDS ref="xri://=eekim" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*eekim</Query>
+  <Status code="100"/>
+  <Expires>2007-12-01T00:28:51.000Z</Expires>
+  <ProviderID>xri://=</ProviderID>
+  <LocalID priority="10">!42CC.559A.8A53.286C</LocalID>
+  <CanonicalID>=!42CC.559A.8A53.286C</CanonicalID>
+  <Service priority="10">
+   <Type select="true">http://openid.net/signon/1.0</Type>
+   <ProviderID/>
+   <URI append="qxri" priority="2">http://2idi.com/openid/</URI>
+   <URI append="qxri" priority="1">https://2idi.com/openid/</URI>
+  </Service>
+  <Service priority="10">
+   <Type select="true">xri://+i-service*(+contact)*($v*1.0)</Type>
+   <Type match="default"/>
+   <ProviderID/>
+   <Path select="true">(+contact)</Path>
+   <Path match="null"/>
+   <URI append="qxri" priority="1">http://2idi.com/contact/</URI>
+  </Service>
+ </XRD>
+</XRDS>

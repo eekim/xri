@@ -1,0 +1,20 @@
+* Canonical ID
+** Just provide an API to get it
+
+* Make sure priority handling works right
+** Pick lowest priority
+** Randomize equivalent members
+** Service End Points (ordered according to spec)
+?? Merge multiple services of the same type?
+
+* Resolution w/ auth type
+** Should return XRI or URL of next place to go
+*** watch for loops
+XX Handle Ref and Redirect correctly
+
+* yadis parsing
+** support simple yadis file (as returned by LJ today)
+** support yadis file from yadis spec
+*** has openId elements
+*** uses multiple Service end points for various auths.
+** handle OpenId Delegates

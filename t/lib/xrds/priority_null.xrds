@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+Testing LocalID without priority.  Should be treated as highest priority.
+
+-->
+<XRDS ref="xri://=foo" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*foo</Query>
+  <Status code="100"/>
+  <Expires>2007-12-01T00:00:00.000Z</Expires>
+  <ProviderID>xri://=</ProviderID>
+  <LocalID priority="20">!2001.1001.1001.1001</LocalID>
+  <LocalID priority="30">!3001.1001.1001.1001</LocalID>
+  <LocalID>!1001.1001.1001.1001</LocalID>
+  <CanonicalID>=!1001.1001.1001.1001</CanonicalID>
+ </XRD>
+</XRDS>
