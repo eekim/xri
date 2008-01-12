@@ -34,6 +34,16 @@ sub new {
     return $self;
 }
 
+sub resolve {
+# return final XRI::XRD object
+#
+# XRI::XRD has methods for:
+#   - fields sorted by priority, 
+#   - service endpoint
+}
+
+
+
 sub _parse {
     my $self = shift;
     my $xri = $self->{xri};

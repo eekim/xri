@@ -1,10 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
 Multiple LocalIDs with the same priority.  The equivalent priorities should be
 sorted randomly.
 
 -->
-<?xml version="1.0" encoding="UTF-8"?>
 <XRDS ref="xri://=foo" xmlns="xri://$xrds">
  <XRD xmlns="xri://$xrd*($v*2.0)">
   <Query>*foo</Query>

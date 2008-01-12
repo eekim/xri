@@ -1,9 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
 Only one LocalID, and has a priority, should be treated as highest priority.
 
 -->
-<?xml version="1.0" encoding="UTF-8"?>
 <XRDS ref="xri://=foo" xmlns="xri://$xrds">
  <XRD xmlns="xri://$xrd*($v*2.0)">
   <Query>*foo</Query>
