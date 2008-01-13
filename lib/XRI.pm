@@ -7,7 +7,7 @@ use Text::Balanced qw(extract_bracketed);
 use LWP::UserAgent;
 use XRI::XRDS;
 
-our $VERSION = '2.0';
+our $VERSION = '1.9.0';
 
 field 'root', -init => "''";
 field 'segments', -init => "[]";
@@ -44,8 +44,9 @@ sub new {
 sub resolve {
     my ($class, $xri) = @_;
     my $self;
+    my $xrd;
 
-    # FIXME: do we need this?  are there other ok values?
+    # FIXME: Support non-2.0 authorities?
     my $service_type = 'xri://$res*auth*($v*2.0)'; 
 
     unless (defined $xri) {
@@ -55,62 +56,53 @@ sub resolve {
     }
 
     if ($xri =~ m{^https?://}) {
-      # TODO: resolve the URL and parse the XRDS document on the other end.
-      # This will need refactoring.
+      return _resolve_segment([ $xri ], '');
     }
     else {
       $self = $class->new($xri);
     }
 
     my $authorities = $ROOT_AUTHORITIES{$self->root};
-    my $xrd;
     my @segments = @{$self->{segments}};
     while (my $segment = shift @segments) {
-      $xrd = _resolve_segment($authorities, $segment);
-      if (@segments) {
-        $authorities = _get_service_endpoints($xrd, $service_type);
-      }
+        $xrd = _resolve_segment($authorities, $segment);
+        if (@segments) {
+            $authorities = $xrd->service_endpoints($service_type);
+        }
     }
     return $xrd;
-    # return XRI::XRD;
 }
 
 sub _resolve_segment {
-  my ($authorities, $segment) = @_;
-  my $xrd;
+    my ($authorities, $segment) = @_;
+    my $xrd;
 
-  for my $authority (@$authorities) {
-     eval {
-        my $xrds_xml = _get_xrds_from_authority($authority, $segment);
-        my $xrds     = XRI::XRDS->new( xml => $xrds_xml );
-        $xrd         = $xrds->last_xrd;
-     };
-     return $xrd if $xrd;
-  }
+    for my $authority (@$authorities) {
+        eval {
+            my $xrds_xml = _get_xrds_from_authority($authority, $segment);
+            my $xrds     = XRI::XRDS->new( xml => $xrds_xml );
+            $xrd         = $xrds->last_xrd;
+        };
+        return $xrd if $xrd;
+    }
 
-  die;  # none of the authorites worked.
+    # FIXME: Again, use Error for this.
+    die;  # none of the authorities worked.
 }
 
 sub _get_xrds_from_authority {
-   my ($authority, $segment) = @_;
-   my $ua = LWP::UserAgent->new;
-   $ua->default_header( "Accept" => "application/xrds+xml" );
-   my $join = ($authority =~ m{/$}) ? "" : "/";
-   $| = 1;
-   print "GETTING: $authority$join$segment\n";
-   my $response = $ua->get($authority . $join . $segment);
-   print $response->content if $response->is_success;
-   print "\n=================================================\n";
-   return $response->content if $response->is_success;
-   die "could not get xrds from $authority for $segment"; # could not get XRDS
-}
-
-sub _get_service_endpoints {
-   my ($xrd, $service_type) = @_;
-   my @all_services =  $xrd->services_by_priority;
-   my @wanted_services = grep { $_->{type} eq $service_type } @all_services;
-   my @uris = map { $_->{value} } map { @{$_->{uri}} } @wanted_services;
-   return \@uris;
+    my ($authority, $segment) = @_;
+    my $ua = LWP::UserAgent->new;
+    $ua->default_header( "Accept" => "application/xrds+xml" );
+    my $join = ($authority =~ m{/$} || !$segment) ? "" : "/";
+    $| = 1;
+#   print "GETTING: $authority$join$segment\n";
+    my $response = $ua->get($authority . $join . $segment);
+#   print $response->content if $response->is_success;
+#   print "\n=================================================\n";
+    return $response->content if $response->is_success;
+    # FIXME: Use Error for this, so we have consistent exception handling
+    die "could not get xrds from $authority for $segment"; # could not get XRDS
 }
 
 sub _parse {

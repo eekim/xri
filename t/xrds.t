@@ -16,7 +16,7 @@ CONSTRUCTOR: {
 CANONICAL_ID: {
     my $xrds = xrds_from_file("t/lib/xrds/priority_null.xrds");
     my $xrd = $xrds->last_xrd;
-    is_deeply( $xrd->canonical_id, { value => '=!1001.1001.1001.1001' } );
+    is( $xrd->canonical_id, '=!1001.1001.1001.1001' );
 }
 
 PRIORITIES_ONLY_ONE: {

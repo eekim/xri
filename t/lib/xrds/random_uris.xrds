@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+Used to test that URIs are sorted by priority and subsorted randomly.
+
+-->
+<XRDS ref="xri://=foo" xmlns="xri://$xrds">
+ <XRD xmlns="xri://$xrd*($v*2.0)">
+  <Query>*foo</Query>
+  <Status code="100"/>
+  <Expires>2007-12-01T00:00:00.000Z</Expires>
+  <ProviderID>xri://=</ProviderID>
+  <LocalID priority="10">!1001.1001.1001.1001</LocalID>
+  <CanonicalID>=!1001.1001.1001.1001</CanonicalID>
+  <Service priority="10">
+   <Type select="true">http://openid.net/signon/1.0</Type>
+   <ProviderID/>
+   <URI append="qxri" priority="1">http://foo.com</URI>
+   <URI append="qxri" priority="2">http://bar.com</URI>
+   <URI append="qxri" priority="2">http://baz.com</URI>
+   <URI append="qxri" priority="2">http://qux.com</URI>
+  </Service>
+ </XRD>
+</XRDS>
