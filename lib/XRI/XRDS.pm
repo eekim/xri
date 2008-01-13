@@ -29,8 +29,8 @@ sub _parse {
 
 sub last_xrd {
     my $self = shift;
-    my $xrd_dom = $self->_xpath( "xrd:XRD", $self->root );
-    return XRI::XRD->new(dom => $xrd_dom->pop);
+    my @xrd_doms = $self->_xpath( "xrd:XRD|xrds:XRD", $self->root );
+    return XRI::XRD->new(dom => pop @xrd_doms);
 }
 
 sub _xpath {
@@ -71,6 +71,11 @@ sub local_ids {
   return [ map { _parse_priority_node($_) } $self->_xpath('xrd:LocalID', $self->dom) ];
 }
 
+sub local_ids_by_priority {
+  my $self = shift;
+  return map { $_->{value} } _sort_by_priority($self->local_ids);
+}
+
 sub services {
   my $self = shift;
   return [ map { $self->_parse_services($_) } $self->_xpath('xrd:Service', $self->dom) ];
@@ -99,9 +104,37 @@ sub _parse_services {
   $s_hash->{openid_delegate} = $od_dom->to_literal if $od_dom;
 
   my @u_doms = $self->_xpath('xrd:URI', $s_dom);
-  $s_hash->{uri} = [ map { _parse_priority_node($_) } @u_doms ] if @u_doms;
+  if (@u_doms) {
+    $s_hash->{uri} = [ map { _parse_priority_node($_) } @u_doms ];
+    $s_hash->{uri} = [ _sort_by_priority($s_hash->{uri}) ];
+  }
 
   return $s_hash;
+}
+
+sub services_by_priority {
+  my $self = shift;
+  return _sort_by_priority($self->services);
+}
+
+sub _sort_by_priority {
+  my $unsorted_list_ref = shift;
+  my $p_hash;  # keys are priorities
+
+  foreach my $item (@$unsorted_list_ref) {
+    push @{$p_hash->{$item->{priority} || 0}}, $item;
+  }
+  return map _random_sort($p_hash->{$_}), sort { $a <=> $b } keys %$p_hash;
+}
+
+sub _random_sort {
+  my $list_ref = shift;
+  my @rand_sorted;
+  while (@$list_ref) {
+    my $i = int(rand(scalar(@$list_ref)));
+    push @rand_sorted, splice @$list_ref, $i, 1;
+  }
+  return @rand_sorted;
 }
 
 sub _parse_priority_node {

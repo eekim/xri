@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Data::Dumper;
 use Test::More qw(no_plan);
 
 use Error qw(:try);
@@ -54,47 +55,70 @@ PRIORITIES_SEPS: {
 	       ] );
 }
 
-
-exit;
-
-=pod
-
 PRIORITIES_RANDOM: {
     my $xrds = xrds_from_file("t/lib/xrds/priority_random.xrds");
-    my $local_ids_first = $xrd->local_ids;
-    ok( $local_ids_first->[3], '!4001.1001.1001.1001' );
+    my $xrd = $xrds->last_xrd;
+    my @local_ids_first = $xrd->local_ids_by_priority;
+    is( $local_ids_first[3], '!4001.1001.1001.1001' );
 
-    my @sorted_local_ids = sort @$local_ids_first;
+    my @sorted_local_ids = sort @local_ids_first;
     is_deeply( \@sorted_local_ids,
 	       [ '!1001.1001.1001.1001', '!2001.1001.1001.1001', '!3001.1001.1001.1001', '!4001.1001.1001.1001' ] );
 
-    my $joined_ids_first = join('', @$local_ids_first);
+    # The probability of calling $self->local_ids_by_priority for this data
+    # set and getting the exact same list every time is (1/6)^n, where n is
+    # the number of times you call this method.  Calculating exactly how close
+    # this is to zero is left as an exercise to the reader.
+
+    my $joined_ids_first = join('', @local_ids_first);
     my $is_same = 1;
     my $i = 0;
     do {
-        my $joined_ids = join('', @$xrd->local_ids);
+        my $joined_ids = join('', $xrd->local_ids_by_priority);
         $is_same = 0 if ($joined_ids ne $joined_ids_first);
         $i++;
-    } while ($is_same or $i == 100);
+    } while ($is_same and $i < 1000);
     ok(!$is_same);
 }
 
 PRIORITIES_SEPS_RANDOM: {
-    my $xrds = xrds_from_file("t/lib/xrds/priority_random.xrds");
-    my $services_first = $xrd->services;
+    my $xrds = xrds_from_file("t/lib/xrds/service_end_points.xrds");
+    my $xrd = $xrds->last_xrd;
+    my @services_first = $xrd->services_by_priority;
 
-    my $joined_services_first = join('', map { $_->{type} } @$services_first);
+    # See comment in PRIORITIES_RANDOM for the risk assessment of this test
+    # failing (assuming the code is correct, which of course, it is).
+
+    my $joined_services_first = join('', map { $_->{type} } @services_first);
     my $is_same = 1;
     my $i = 0;
     do {
-        my $joined_services = join('', map { $_->{type} } @$xrd->services);
+        my $joined_services = join('', map { $_->{type} } $xrd->services_by_priority);
         $is_same = 0 if ($joined_services ne $joined_services_first);
         $i++;
-    } while ($is_same or $i == 100);
+    } while ($is_same and $i < 1000);
     ok(!$is_same);
 }
 
-=cut
+PRIORITIES_SEPS_RANDOM: {
+    my $xrds = xrds_from_file("t/lib/xrds/random_uris.xrds");
+    my $xrd = $xrds->last_xrd;
+    my ($service) = $xrd->services_by_priority;
+
+    # See comment in PRIORITIES_RANDOM for the risk assessment of this test
+    # failing (assuming the code is correct, which of course, it is).
+
+    my $joined_uris_first = join('', map { $_->{value} } @{$service->{uri}});
+    my $is_same = 1;
+    my $i = 0;
+    do {
+        my ($service) = $xrd->services_by_priority;
+        my $joined_uris = join '', map { $_->{value} } @{$service->{uri}};
+        $is_same = 0 if ($joined_uris ne $joined_uris_first);
+        $i++;
+    } while ($is_same and $i < 1000);
+    ok(!$is_same);
+}
 
 sub xrds_from_file {
     my $file = shift;

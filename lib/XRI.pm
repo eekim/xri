@@ -4,6 +4,8 @@ use warnings;
 use Class::Field qw(field);
 use Error qw(try);
 use Text::Balanced qw(extract_bracketed);
+use LWP::UserAgent;
+use XRI::XRDS;
 
 our $VERSION = '2.0';
 
@@ -20,6 +22,11 @@ our @DELIMS = (@GCS, @SEG_SEP, @SEC_DELIM);
 our $delim_rx = "[" . join("", map quotemeta, @DELIMS) . "]";
 our $not_delim_rx = "[^" . join("", map quotemeta, @DELIMS) . "]";
 
+our %ROOT_AUTHORITIES = (
+    '@' => [ 'https://at.xri.net/', 'http://at.xri.net/' ],
+    '=' => [ 'https://equal.xri.net/', 'http://equal.xri.net/' ]
+);
+
 sub new {
     my ($class, $xri) = @_;
 
@@ -35,14 +42,76 @@ sub new {
 }
 
 sub resolve {
-# return final XRI::XRD object
-#
-# XRI::XRD has methods for:
-#   - fields sorted by priority, 
-#   - service endpoint
+    my ($class, $xri) = @_;
+    my $self;
+
+    # FIXME: do we need this?  are there other ok values?
+    my $service_type = 'xri://$res*auth*($v*2.0)'; 
+
+    unless (defined $xri) {
+        throw XRI::Exception::ExpectedXRI(
+            "XRI->resolve() expects an XRI (or URI) as an argument"
+        );
+    }
+
+    if ($xri =~ m{^https?://}) {
+      # TODO: resolve the URL and parse the XRDS document on the other end.
+      # This will need refactoring.
+    }
+    else {
+      $self = $class->new($xri);
+    }
+
+    my $authorities = $ROOT_AUTHORITIES{$self->root};
+    my $xrd;
+    my @segments = @{$self->{segments}};
+    while (my $segment = shift @segments) {
+      $xrd = _resolve_segment($authorities, $segment);
+      if (@segments) {
+        $authorities = _get_service_endpoints($xrd, $service_type);
+      }
+    }
+    return $xrd;
+    # return XRI::XRD;
 }
 
+sub _resolve_segment {
+  my ($authorities, $segment) = @_;
+  my $xrd;
 
+  for my $authority (@$authorities) {
+     eval {
+        my $xrds_xml = _get_xrds_from_authority($authority, $segment);
+        my $xrds     = XRI::XRDS->new( xml => $xrds_xml );
+        $xrd         = $xrds->last_xrd;
+     };
+     return $xrd if $xrd;
+  }
+
+  die;  # none of the authorites worked.
+}
+
+sub _get_xrds_from_authority {
+   my ($authority, $segment) = @_;
+   my $ua = LWP::UserAgent->new;
+   $ua->default_header( "Accept" => "application/xrds+xml" );
+   my $join = ($authority =~ m{/$}) ? "" : "/";
+   $| = 1;
+   print "GETTING: $authority$join$segment\n";
+   my $response = $ua->get($authority . $join . $segment);
+   print $response->content if $response->is_success;
+   print "\n=================================================\n";
+   return $response->content if $response->is_success;
+   die "could not get xrds from $authority for $segment"; # could not get XRDS
+}
+
+sub _get_service_endpoints {
+   my ($xrd, $service_type) = @_;
+   my @all_services =  $xrd->services_by_priority;
+   my @wanted_services = grep { $_->{type} eq $service_type } @all_services;
+   my @uris = map { $_->{value} } map { @{$_->{uri}} } @wanted_services;
+   return \@uris;
+}
 
 sub _parse {
     my $self = shift;
