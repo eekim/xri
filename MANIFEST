@@ -2,7 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 README
-bin/resolve.pl
+bin/xriresolve.pl
 lib/XRI.pm
 lib/XRI/XRD.pm
 lib/XRI/XRDS.pm

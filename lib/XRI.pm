@@ -119,7 +119,7 @@ sub _parse {
 
     # Ensure the root is a valid GCS character
     unless (is_member($root, @GCS)) {
-        throw XRI::Exception::InvalidXRI("Root not found in $xri");
+        throw XRI::Exception::InvalidXRI("Root not found in $root$xri");
     }
 
     # Assert that XRIs that start w/ "!" have a subsequent "!"
