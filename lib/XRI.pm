@@ -118,7 +118,7 @@ sub _parse {
     substr($xri, 0, 1) = "";
 
     # Ensure the root is a valid GCS character
-    unless (is_member($root, @GCS)) {
+    unless (_is_member($root, @GCS)) {
         throw XRI::Exception::InvalidXRI("Root not found in $root$xri");
     }
 
@@ -137,7 +137,7 @@ sub _parse {
     my $segments = [];
     while (length $xri) {
         if ($xri =~ /^$delim_rx\(/) {
-            my $delim  = remove_first_char($xri);
+            my $delim  = _remove_first_char($xri);
             my $xref = extract_bracketed($xri, "()");
             unless (defined $xref) {
                 throw XRI::Exception::InvalidXRI(
@@ -149,7 +149,7 @@ sub _parse {
             last;  # Reached the end of the authority
         } elsif ($xri =~ s/^($delim_rx$not_delim_rx+)//) {
             my $segment = $1;
-            $self->assert_segment_ok($segment);
+            _assert_segment_ok($segment);
             push @$segments, $segment;
         } else {
             throw XRI::Exception::InvalidXRI(
@@ -167,8 +167,8 @@ sub _parse {
     $self->fragment($fragment) if defined $fragment;
 }
 
-sub assert_segment_ok {
-    my ($self, $segment) = @_;
+sub _assert_segment_ok {
+    my $segment = shift;
 
     # FIXME: Check for other kinds of badness too.  E.g. more unescaped chars.
     # FIXME: delims are repeated here and elsewhere
@@ -179,13 +179,13 @@ sub assert_segment_ok {
     );
 }
 
-sub remove_first_char {
+sub _remove_first_char {
     my $c = substr($_[0], 0, 1);
     substr($_[0], 0, 1) = "";
     return $c;
 }
 
-sub is_member {
+sub _is_member {
     my ($char, @list) = @_;
     return grep { $_ eq $char } @list;
 }
