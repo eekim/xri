@@ -1,4 +1,5 @@
 package XRI;
+
 use strict;
 use warnings;
 use Class::Field qw(field);
@@ -7,7 +8,7 @@ use Text::Balanced qw(extract_bracketed);
 use LWP::UserAgent;
 use XRI::XRDS;
 
-our $VERSION = '1.9.0';
+our $VERSION = '2.0.0';
 
 field 'root', -init => "''";
 field 'segments', -init => "[]";
@@ -198,3 +199,150 @@ package XRI::Exception::InvalidXRI;
 use base qw(Error::Simple);
 
 __END__
+
+=head1 NAME
+
+XRI -- Resolves XRI 2.0 identifiers (including URIs)
+
+=head1 VERSION
+
+Version 2.0.0
+
+=head1 SYNOPSIS
+
+Library for resolving XRIs.
+
+    use XRI;
+
+    my $xrd = XRI->resolve('=eekim');
+    print $xrd->dom->toString(2);  # print the resulting XRI descriptor
+
+=head1 METHODS
+
+=head2 new( $xri )
+
+Parses the value of $xri into its root, segments, path, query, and
+fragment, all of which can be accessed via the appropriate
+accessors/mutators.
+
+=head2 resolve ( $xri )
+
+Resolves the $xri, returning the resulting XRI descriptor as an
+L<XRI::XRD> object.
+
+You can pass a URI to this function, provided that it points to an
+XRDS file.  You can use this to do discovery on OpenID 2.0 URIs,
+although this library will not handle OpenID delegation since it's not
+part of the XRI spec.
+
+=head1 ACCESSORS / MUTATORS
+
+=head2 root( )
+
+Returns the root of the XRI.  This is typically a Global Context
+Symbol (GCS), usually an equals ("="), which represents individuals,
+an at ("@"), which represents groups, or a bang ("!"), which
+represents i-numbers.
+
+=head2 segments( )
+
+Returns the segments of the XRI, not including the root.  Each segment
+is preceded by either the delegation character ("*") or a bang ("!")
+for i-numbers.
+
+=head2 path( )
+
+Returns the path of an XRI, which is largely equivalent to a path in
+URIs.
+
+=head2 query( )
+
+Returns the query string of an XRI, which is equivalent to a query
+string in a URI.
+
+=head2 fragment( )
+
+Returns the fragment of an XRI, which is equivalent to a fragment in a
+URI.
+
+=head1 NOTES
+
+This is not yet fully compliant with the XRI 2.0 spec.  L<XRI::XRDS>
+and L<XRI::XRD> don't represent all of the fields found in an XRDS
+yet, and we don't currently handling resolution when Refs or Redirects
+are specified.
+
+=head1 REFERENCES
+
+XRI spec
+
+=over
+
+L<http://www.oasis-open.org/committees/tc_home.php?wg_abbrev=xri>
+
+=back
+
+i-names
+
+=over
+
+L<http://www.inames.net/>
+
+=back
+
+Yadis
+
+=over
+
+L<http://yadis.org/>
+
+=back
+
+barx
+
+=over
+
+L<http://xrisoft.org/>
+
+=back
+
+OpenXRI
+
+=over
+
+http://openxri.org/
+
+=back
+
+=head1 ACKNOWLEDGEMENTS
+
+Much love and credit go to Fen Labalme, whose original XRI Perl
+library was the very first implementation of the XRI specification,
+and who has been passionately committed to building user-centric
+identity systems for over two decades.
+
+Thanks also to Victor Grey and Kermit Snelson, whose Ruby XRI resolver
+(barx) helped us navigate the complexities of the spec and provided
+some of our test cases.  Many thanks to Drummond Reed and Gabe Wachob,
+the co-chairs of the XRI Technical Committee, as well as John Bradley
+and Andy Dale for patiently answering our many questions about the
+spec.
+
+Finally, thanks to Scott Kveton, Chris Messina, and David Recordon for
+organizing OpenIDDevCamp, which provided the critical resources
+(i.e. food, beer, and wireless) necessary to finish this library.
+
+=head1 AUTHORS
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.comE<gt>
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+=head1 COPYRIGHT & LICENSE
+
+(C) Copyright 2008 Blue Oxen Associates.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

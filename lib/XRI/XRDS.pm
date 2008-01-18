@@ -1,12 +1,12 @@
 package XRI::XRDS;
+
 use strict;
 use warnings;
-use XRI::XRD;
-use XML::LibXML;
 use Class::Field qw(field);
 use Error qw(:try);
+use XML::LibXML;
+use XRI::XRD;
 
-field 'xrd';
 field 'xml';
 field 'dom';
 field 'root';
@@ -47,3 +47,69 @@ package XRI::Exception::XRDS;
 use base qw(Error::Simple);
 
 1;
+
+__END__
+
+=head1 NAME
+
+XRI::XRDS -- Parses and represents XRDS (XRI Descriptors) data
+
+=head1 VERSION
+
+Version 2.0.0
+
+=head1 SYNOPSIS
+
+Parses and represents the XRDS XML format, which consists of multiple
+L<XRI::XRD> elements, the last of which is usually the only one that
+is relevant.  Most users of this library will never use this class.
+
+    use XRI::XRDS;
+
+    my $xrds = XRI::XRDS->new( xml => $xrds_xml );
+    my $xrd  = $xrds->last_xrd;  # gets the last XRD
+
+=head1 METHODS
+
+=head2 new( xml => $xml )
+
+Constructor.  Parses $xml, which is an XRDS XML string.
+
+=head2 last_xrd( )
+
+Returns the last XRD element, which is usually the only one you'll
+care about, as an L<XRI::XRD> object.
+
+=head1 ACCESSORS / MUTATORS
+
+These are essentially private methods, although they may be useful for
+debugging.
+
+=head2 xml( )
+
+Returns the XML data that instantiated this object.
+
+=head2 dom( )
+
+Returns the DOM representation of the XML data that instantiated this
+class.
+
+=head2 root( )
+
+Returns the root node of the DOM representation of the XML data that
+instantiated this class.
+
+=head1 AUTHORS
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.comE<gt>
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+=head1 COPYRIGHT & LICENSE
+
+(C) Copyright 2008 Blue Oxen Associates.  All rights reserved.
+
+This program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
+
+=cut

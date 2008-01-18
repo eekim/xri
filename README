@@ -1,17 +1,15 @@
 XRI
 
-XRI 2.0 resolver library, including an XRDS parser (a subset of which
-is used for Yadis).  May be used for resolving i-names and beyond.
+XRI is a library for resolving eXtensible Resource Identifiers (XRI),
+which is a metalanguage for describing identifiers.  (XRIs are to
+URIs, as XML is to HTML.)  XRIs serve as the basis for i-names, which
+can be used as identifiers for OpenID 2.0.
 
-This is basically a port of Victor Grey and Kermit Snelson's ruby barx
-code, including a Perl-ish implementation of their API.  Much love and
-credit go to Fen Labalme, whose original XRI Perl library was the very
-first implementation of the XRI specification.
+This library includes support for parsing XRI Resource Descriptors and
+Yadis, which is OpenID's discovery format.  This library is mostly
+compliant with the OASIS XRI 2.0 specification.
 
 Pertinent links:
-
-    barx
-      http://xrisoft.org/
 
     XRI spec
       http://www.oasis-open.org/committees/tc_home.php?wg_abbrev=xri
@@ -21,6 +19,12 @@ Pertinent links:
 
     Yadis
       http://yadis.org/
+
+    barx
+      http://xrisoft.org/
+
+    OpenXRI
+      http://openxri.org/
 
 INSTALLATION
 
@@ -38,11 +42,32 @@ perldoc command.
 
     perldoc XRI
 
-COPYRIGHT AND LICENCE
+AUTHORS
 
-Copyright (C) 2007 Blue Oxen Associates
+Eugene Eric Kim <eekim@blueoxen.com>
+Matthew O'Connor <matthew@canonical.org>
+
+ACKNOWLEDGEMENTS
+
+Much love and credit go to Fen Labalme, whose original XRI Perl
+library was the very first implementation of the XRI specification,
+and who has been passionately committed to building user-centric
+identity systems for over two decades.
+
+Thanks also to Victor Grey and Kermit Snelson, whose Ruby XRI resolver
+(barx) helped us navigate the complexities of the spec and provided
+some of our test cases.  Many thanks to Drummond Reed and Gabe Wachob,
+the co-chairs of the XRI Technical Committee, as well as John Bradley
+and Andy Dale for patiently answering our many questions about the
+spec.
+
+Finally, thanks to Scott Kveton, Chris Messina, and David Recordon for
+organizing OpenIDDevCamp, which provided the critical resources
+(i.e. food, beer, and wireless) necessary to finish this library.
+
+COPYRIGHT AND LICENSE
+
+(C) Copyright 2008 Blue Oxen Associates.  All rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
-
-(test line)
