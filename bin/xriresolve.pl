@@ -5,7 +5,6 @@
 # Resolves an XRI.  Works both on the command line and as a CGI.
 
 use strict;
-use lib '/Users/eekim/devel/XRI/lib';
 use CGI qw/:standard -nosticky/;
 use Error qw/:try/;
 use Getopt::Std;
