@@ -13,6 +13,9 @@ sub new {
     throw XRI::Exception::XRD(
         "No dom parameter to $class\::new()"
     ) unless defined $args{dom};
+    $args{services_by_path} = [];
+    $args{services_by_type} = [];
+    $args{services_by_mediatype} = [];
     my $self = bless( \%args, $class );
     $self->dom($args{dom});
     return $self;
@@ -74,10 +77,13 @@ sub services_by_priority {
     return _sort_by_priority($self->services);
 }
 
+# %service_match = ( path => '', type => '', media_type => '' )
+
 sub service_endpoints {
-    my ($self, $service_type) = @_;
+    my ($self, %service_match) = @_;
     my @all_services =  $self->services_by_priority;
-    my @wanted_services = grep { $_->{type} eq $service_type } @all_services;
+    my @wanted_services = grep { $_->{type} eq $service_match{type} }
+                               @all_services;
     my @uris = map { $_->{value} } map { @{$_->{uri}} } @wanted_services;
     return \@uris;
 }

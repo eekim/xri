@@ -68,7 +68,7 @@ sub resolve {
     while (my $segment = shift @segments) {
         $xrd = _resolve_segment($authorities, $segment);
         if (@segments) {
-            $authorities = $xrd->service_endpoints($service_type);
+            $authorities = $xrd->service_endpoints(type => $service_type);
         }
     }
     return $xrd;
