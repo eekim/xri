@@ -47,14 +47,101 @@ sub services_by_priority {
     return &sort_by_priority($self->services);
 }
 
-# %service_match = ( path => '', type => '', media_type => '' )
-
 sub service_endpoints {
-    my ($self, %service_match) = @_;
+    my ($self, %service_match) = @_; # (path => p, type => t, media_type => m)
+
+    my $sel_state = {};
     my @all_services =  $self->services_by_priority;
-    my @wanted_services = grep { $_->type->{value} eq $service_match{type} }
-                               @all_services;
-    my @uris = map { $_->{value} } map { @{$_->{uri}} } @wanted_services;
+    my @selected;
+    my @default;
+
+    SEP: foreach my $sep (@all_services) {
+        my $ss = {
+            path => { positive => 0, default => 0 },
+            type => { positive => 0, default => 0 },
+            media_type => { positive => 0, default => 0 }
+        };
+        my %sep_sel = (
+            path => sub { $sep->path(@_) },
+            type => sub { $sep->type(@_) },
+            media_type => sub { $sep->media_type(@_) },
+        );
+        foreach my $sel ('path', 'type', 'media_type') {
+            my $sel_h = $sep_sel{$sel}->();
+            if ($sel_h) {
+                if ( ($sel_h->{match} eq 'any') or
+                     ($sel_h->{match} eq 'non-null' and $sel_h->{value}) or
+                     ($sel_h->{match} eq 'null' and !defined $sel_h->{value}) or
+                     (!$sel_h->{match} and !$sel_h->{value})   # 13.3.4
+                   ) {   # 13.3.2
+                    $ss->{$sel}->{positive} = 1;
+                }
+                elsif ($sel_h->{match} eq 'default') {   # 13.3.1
+                    $ss->{$sel}->{default} = 1;
+                }
+                elsif ($sel eq 'type' or $sel eq 'media_type') {   # 13.3.6|8
+                    if ($sel_h->{value} eq $service_match{$sel}) {
+                        if ($sel_h->{select} eq 'true') {   # 13.4.2
+                            push @selected, $sep;
+                            next SEP;
+                        }
+                        else {
+                            $ss->{$sel}->{positive} = 1;
+                        }
+                    }
+                }
+                elsif ($sel eq 'path') {   # 13.3.7
+                    if ($sel_h->{value} =~ /^$service_match{$sel}/) {
+                        if ($sel_h->{select} eq 'true') {   # 13.4.2
+                            push @selected, $sep;
+                            next SEP;
+                        }
+                        else {
+                            $ss->{$sel}->{positive} = 1;
+                        }
+                    }
+                }
+            }
+            else {   # 13.3.3
+                $ss->{$sel}->{default} = 1;
+            }
+        } # endfor SEL
+
+        if ( $ss->{path}->{positive} and $ss->{type}->{positive}
+             and $ss->{media_type}->{positive} ) {   # 13.4.3
+            push @selected, $sep;
+        }
+        elsif ( ( $ss->{path}->{positive} or $ss->{path}->{default} ) and
+               ( $ss->{type}->{positive} or $ss->{type}->{default} ) and
+               ( $ss->{media_type}->{positive} or
+                 $ss->{media_type}->{default} ) ) {   # 13.4.4
+            push @default, $sep;
+        }
+        $sel_state->{$sep} = $ss;
+    } # endfor SEP
+
+    if (!@selected) {   # 13.5.2
+        foreach my $sep (@default) {
+            my $ss = $sel_state->{$sep};
+            if ( ($ss->{path}->{positive} and $ss->{type}->{positive}) or
+                 ($ss->{type}->{positive} and $ss->{media_type}->{positive}) or
+                 ($ss->{path}->{positive} and $ss->{media_type}->{positive}) ) {
+                push @selected, $sep;
+            }
+        }
+        if (!@selected) {
+            foreach my $sep (@default) {
+                my $ss = $sel_state->{$sep};
+                if ( $ss->{path}->{positive} or $ss->{type}->{positive} or
+                     $ss->{media_type}->{positive} ) {
+                    push @selected, $sep;
+                }
+            }
+        }
+        push @selected, @default if !@selected;
+    }
+
+    my @uris = map { $_->{value} } map { @{$_->{uri}} } @selected;
     return \@uris;
 }
 
