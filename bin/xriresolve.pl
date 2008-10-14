@@ -70,23 +70,27 @@ sub resolve {
 sub print_xrd {
     my $xrd = shift;
 
-    print h2('IDs') . '<table border="0">' if ($is_cgi);
-    &print_id("Canonical ID", $xrd->canonical_id) if $xrd->canonical_id;
+    print h2('IDs') . '<table border="0">' if $is_cgi;
+    &print_attr("Canonical ID", $xrd->canonical_id) if $xrd->canonical_id;
     foreach my $lid ($xrd->local_ids_by_priority) {
-        &print_id("    Local ID", $lid);
+        &print_attr("Local ID", $lid);
     }
     print '</table>' if ($is_cgi);
     print "\n";
 
     my @services = $xrd->services_by_priority;
-    print h2('Services') if (@services and $is_cgi);
+    print h2('Services') . '<table border="0">' if (@services and $is_cgi);
     foreach my $service (@services) {
-        &print_service_type($service->{type});
-        print "<ul>\n" if ($service->{uri} and $is_cgi);
-        foreach my $uri (@{$service->{uri}}) {
-            &print_service_uri($uri->{value});
+        &print_attr('Path', $service->path->{value}) if $service->path;
+        &print_attr('Type', $service->type->{value}) if $service->type;
+        &print_attr('MediaType', $service->media_type->{value})
+            if $service->media_type;
+	print '</table>' if $is_cgi;
+        print "<ul>\n" if ($service->uri and $is_cgi);
+        foreach my $uri (@{$service->uri}) {
+            &print_attr('URI', $uri->{value});
         }
-        print "</ul>" if ($service->{uri} and $is_cgi);
+        print "</ul>" if ($service->uri and $is_cgi);
         print "\n";
     }
 
@@ -101,34 +105,19 @@ sub print_xrd {
     }
 }
 
-sub print_id {
-    my ($id_type, $id) = @_;
+sub print_attr {
+    my ($type, $val) = @_;
 
     if ($is_cgi) {
-        print "<tr><td><b>$id_type</b></td><td>$id</td></tr>\n";
+        if ($type eq 'URI') {
+  	    print "  <li>$val</li>\n";
+        }
+        else {
+            print "<tr><td><b>$type</b></td><td>$val</td></tr>\n";
+	}
     }
     else {
-        print "$id_type: $id\n";
-    }
-}
-
-sub print_service_type {
-    my $type = shift;
-    if ($is_cgi) {
-        print "<p><i>$type</i></p>\n";
-    }
-    else {
-        print "     Service: $type\n";
-    }
-}
-
-sub print_service_uri {
-    my $uri = shift;
-    if ($is_cgi) {
-        print "  <li>$uri</li>\n";
-    }
-    else {
-        print "       - $uri\n";
+        printf "%12s: %s\n", $type, $val;
     }
 }
 

@@ -4,7 +4,8 @@ use strict;
 use warnings;
 use Class::Field qw(field);
 use Error qw(:try);
-use XML::LibXML;
+use XRI::SEP;
+use XRI::Util qw(sort_by_priority parse_priority_node xpath);
 
 field 'dom';
 
@@ -13,9 +14,6 @@ sub new {
     throw XRI::Exception::XRD(
         "No dom parameter to $class\::new()"
     ) unless defined $args{dom};
-    $args{services_by_path} = [];
-    $args{services_by_type} = [];
-    $args{services_by_mediatype} = [];
     my $self = bless( \%args, $class );
     $self->dom($args{dom});
     return $self;
@@ -23,58 +21,30 @@ sub new {
 
 sub canonical_id {
     my $self = shift;
-    return $self->_xpath('xrd:CanonicalID|xrds:CanonicalID', $self->dom)->to_literal;
+    return &xpath('xrd:CanonicalID|xrds:CanonicalID', $self->dom)->to_literal;
 }
 
 sub local_ids {
     my $self = shift;
-    return [ map { _parse_priority_node($_) } $self->_xpath('xrd:LocalID|xrds:LocalID', $self->dom) ];
+    return [ map { &parse_priority_node($_) }
+	         &xpath('xrd:LocalID|xrds:LocalID', $self->dom) ];
 }
 
 sub local_ids_by_priority {
     my $self = shift;
-    return map { $_->{value} } _sort_by_priority($self->local_ids);
+    return map { $_->{value} } &sort_by_priority($self->local_ids);
 }
 
+# FIXME: Need to store the default list of SEPs, possibly as an attribute.
 sub services {
     my $self = shift;
-    return [ map { $self->_parse_services($_) } $self->_xpath('xrd:Service', $self->dom) ];
-}
-
-sub _parse_services {
-    my ($self, $s_dom) = @_;
-    my $s_hash = {};
-
-    # FIXME: We're only parsing for Type, URI, and openid:Delegate.
-    # There are a bunch of other possible elements that we're ignoring
-    # because they're not important for our immediate needs. We're also
-    # ignoring some attributes.
-
-    my $priority = $s_dom->findvalue('./@priority');
-    $s_hash->{priority} = $priority unless $priority eq '';
-
-    my ($t_dom) = $self->_xpath('xrd:Type', $s_dom);
-    $s_hash->{type} = $t_dom->to_literal if $t_dom;
-
-    # FIXME: We're hard-coding a search for openid:Delegate, because
-    # we know it's a commonly used SEP extension.  However, what we
-    # should actually be returning is a list of all elements that don't
-    # fall in the xrd namespace.
-    my ($od_dom) = $self->_xpath('openid:Delegate', $s_dom);
-    $s_hash->{openid_delegate} = $od_dom->to_literal if $od_dom;
-
-    my @u_doms = $self->_xpath('xrd:URI', $s_dom);
-    if (@u_doms) {
-        $s_hash->{uri} = [ map { _parse_priority_node($_) } @u_doms ];
-        $s_hash->{uri} = [ _sort_by_priority($s_hash->{uri}) ];
-    }
-
-    return $s_hash;
+    return [ map { XRI::SEP->new(dom => $_) }
+	         &xpath('xrd:Service', $self->dom) ];
 }
 
 sub services_by_priority {
     my $self = shift;
-    return _sort_by_priority($self->services);
+    return &sort_by_priority($self->services);
 }
 
 # %service_match = ( path => '', type => '', media_type => '' )
@@ -82,49 +52,10 @@ sub services_by_priority {
 sub service_endpoints {
     my ($self, %service_match) = @_;
     my @all_services =  $self->services_by_priority;
-    my @wanted_services = grep { $_->{type} eq $service_match{type} }
+    my @wanted_services = grep { $_->type->{value} eq $service_match{type} }
                                @all_services;
     my @uris = map { $_->{value} } map { @{$_->{uri}} } @wanted_services;
     return \@uris;
-}
-
-sub _sort_by_priority {
-    my $unsorted_list_ref = shift;
-    my $p_hash;  # keys are priorities
-
-    foreach my $item (@$unsorted_list_ref) {
-        push @{$p_hash->{$item->{priority} || 0}}, $item;
-    }
-    return map _random_sort($p_hash->{$_}), sort { $a <=> $b } keys %$p_hash;
-}
-
-sub _random_sort {
-    my $list_ref = shift;
-    my @rand_sorted;
-    while (@$list_ref) {
-        my $i = int(rand(scalar(@$list_ref)));
-        push @rand_sorted, splice @$list_ref, $i, 1;
-    }
-    return @rand_sorted;
-}
-
-sub _parse_priority_node {
-    my $node_dom = shift;
-    my $node_hash = {};
-
-    my $priority = $node_dom->findvalue('./@priority');
-    $node_hash->{priority} = $priority unless $priority eq '';
-    $node_hash->{value} = $node_dom->to_literal;
-    return $node_hash;
-}
-
-sub _xpath {
-    my ( $self, $xpath, $node ) = @_;
-    my $xpc = XML::LibXML::XPathContext->new;
-    $xpc->registerNs( 'xrd',  'xri://$xrd*($v*2.0)' );
-    $xpc->registerNs( 'xrds', 'xri://$xrds' );
-    $xpc->registerNs( 'openid', 'http://openid.net/xmlns/1.0' );
-    return $xpc->findnodes( $xpath, $node );
 }
 
 
