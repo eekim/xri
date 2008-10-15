@@ -71,7 +71,7 @@ sub resolve {
 sub print_xrd {
     my ($xrd, $xri) = @_;
 
-    print h2('IDs') . '<table border="0">' if $is_cgi;
+    print h2('IDs') . '<table border="0" width="60%" cellspacing="5">' if $is_cgi;
     &print_attr("Canonical ID", $xrd->canonical_id) if $xrd->canonical_id;
     foreach my $lid ($xrd->local_ids_by_priority) {
         &print_attr("Local ID", $lid);
@@ -81,18 +81,17 @@ sub print_xrd {
 
     my @services = ($xri->path) ? $xrd->service_endpoints(path => $xri->path) :
         $xrd->services_by_priority;
-    print h2('Services') . '<table border="0">' if (@services and $is_cgi);
+    print h2('Services') if (@services and $is_cgi);
     foreach my $service (@services) {
+        print '<p><table border="0" width="60%" cellspacing="5">' if $is_cgi;
         &print_attr('Path', $service->path->{value}) if $service->path;
         &print_attr('Type', $service->type->{value}) if $service->type;
         &print_attr('MediaType', $service->media_type->{value})
             if $service->media_type;
-	print '</table>' if $is_cgi;
-        print "<ul>\n" if ($service->uri and $is_cgi);
         foreach my $uri (@{$service->uri}) {
             &print_attr('URI', $uri);
         }
-        print "</ul>" if ($service->uri and $is_cgi);
+        print '</table></p>' if $is_cgi;
         print "\n";
     }
 
@@ -111,12 +110,7 @@ sub print_attr {
     my ($type, $val) = @_;
 
     if ($is_cgi) {
-        if ($type eq 'URI') {
-  	    print "  <li>$val</li>\n";
-        }
-        else {
-            print "<tr><td><b>$type</b></td><td>$val</td></tr>\n";
-	}
+        print "<tr><td width=\"40%\" align=\"right\"><b>$type</b></td><td with=\"60%\">$val</td></tr>\n";
     }
     else {
         printf "%12s: %s\n", $type, $val;
