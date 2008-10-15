@@ -232,16 +232,17 @@ Library for resolving XRIs.
 
     use XRI;
 
-    my $xrd = XRI->resolve('=eekim');
+    my $xri = XRI->new('=eekim');
+    my $xrd = $xri->resolve;
     print $xrd->dom->toString(2);  # print the resulting XRI descriptor
 
 =head1 METHODS
 
 =head2 new( $xri )
 
-Parses the value of $xri into its root, segments, path, query, and
-fragment, all of which can be accessed via the appropriate
-accessors/mutators.
+Parses the value of $xri (assuming it is not a URI) into its root,
+segments, path, query, and fragment, all of which can be accessed via
+the appropriate accessors/mutators.
 
 =head2 resolve ( $xri )
 

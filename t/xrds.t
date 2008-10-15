@@ -127,8 +127,8 @@ PRIORITIES_SEPS_RANDOM: {
 SEP_MATCH: {
     my $xrds = xrds_from_file("t/lib/xrds/yadis.xrds");
     my $xrd = $xrds->last_xrd;
-    my $sep = $xrd->service_endpoints;
-    is_deeply($sep, []);
+    my @sep = $xrd->service_endpoints;
+    ok(!@sep);
 
     @sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
     isa_ok($sep[0], 'XRI::SEP');
