@@ -130,22 +130,22 @@ SEP_MATCH: {
     my $sep = $xrd->service_endpoints;
     is_deeply($sep, []);
 
-    $sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
-    isa_ok($sep->[0], 'XRI::SEP');
-    is_deeply($sep->[0]->uri,
+    @sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
+    isa_ok($sep[0], 'XRI::SEP');
+    is_deeply($sep[0]->uri,
         [ 'http://www.myopenid.com/server' ]);
-    is_deeply($sep->[1]->uri,
+    is_deeply($sep[1]->uri,
         [ 'http://www.livejournal.com/openid/server.bml' ]);
 
     $xrds = xrds_from_file("t/lib/xrds/drummond.xrds");
     $xrd = $xrds->last_xrd;
-    $sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
-    is_deeply($sep->[0]->uri,
+    @sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
+    is_deeply($sep[0]->uri,
         [ 'https://2idi.com/openid/',
           'http://2idi.com/openid/' ]);
 
-    $sep = $xrd->service_endpoints(path=>'(+index)');
-    is_deeply($sep->[0]->uri,
+    @sep = $xrd->service_endpoints(path=>'(+index)');
+    is_deeply($sep[0]->uri,
         [ 'http://2idi.com/forwarding/' ]);
 }
 

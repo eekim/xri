@@ -54,21 +54,22 @@ else {   # command-line
 ### functions
 
 sub resolve {
-    my $xri = shift;
+    my $xri_s = shift;
     my $xrd;
     my $got_exception = 0;
 
+    my $xri = XRI->new($xri_s);
     try {
-        $xrd = XRI->resolve($xri);
+        $xrd = $xri->resolve;
     }
     catch XRI::Exception::InvalidXRI with {
-        &print_error($xri, shift);
+        &print_error($xri_s, shift);
     };
-    &print_xrd($xrd) if $xrd;
+    &print_xrd($xrd, $xri) if $xrd;
 }
 
 sub print_xrd {
-    my $xrd = shift;
+    my ($xrd, $xri) = @_;
 
     print h2('IDs') . '<table border="0">' if $is_cgi;
     &print_attr("Canonical ID", $xrd->canonical_id) if $xrd->canonical_id;
@@ -78,7 +79,8 @@ sub print_xrd {
     print '</table>' if ($is_cgi);
     print "\n";
 
-    my @services = $xrd->services_by_priority;
+    my @services = ($xri->path) ? $xrd->service_endpoints(path => $xri->path) :
+        $xrd->services_by_priority;
     print h2('Services') . '<table border="0">' if (@services and $is_cgi);
     foreach my $service (@services) {
         &print_attr('Path', $service->path->{value}) if $service->path;

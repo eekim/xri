@@ -38,37 +38,47 @@ sub new {
     }
 
     my $self = bless({xri => $xri}, $class);
-    $self->_parse;
+    $self->_parse unless $xri =~ m{^https?://};
     return $self;
 }
 
 sub resolve {
-    my ($class, $xri) = @_;
-    my $self;
+    my ($self, $xri) = @_;
     my $xrd;
 
     # FIXME: Support non-2.0 authorities?
     my $service_type = 'xri://$res*auth*($v*2.0)'; 
 
-    unless (defined $xri) {
-        throw XRI::Exception::ExpectedXRI(
-            "XRI->resolve() expects an XRI (or URI) as an argument"
-        );
-    }
+#    unless (defined $xri) {
+#        throw XRI::Exception::ExpectedXRI(
+#            "XRI->resolve() expects an XRI (or URI) as an argument"
+#        );
+#    }
 
-    if ($xri =~ m{^https?://}) {
-      return _resolve_segment([ $xri ], '');
+    if ($xri) {
+        if ($xri =~ m{^https?://}) {
+            return _resolve_segment([ $xri ], '');
+        }
+        else {
+            $self->{xri} = $xri;
+            $self->_parse;
+        }
     }
-    else {
-      $self = $class->new($xri);
-    }
+#    else {
+#      $self = $class->new($xri);
+#    }
 
     my $authorities = $ROOT_AUTHORITIES{$self->root};
     my @segments = @{$self->{segments}};
     while (my $segment = shift @segments) {
         $xrd = _resolve_segment($authorities, $segment);
         if (@segments) {
-            $authorities = $xrd->service_endpoints(type => $service_type);
+            my @seps = $xrd->service_endpoints(type => $service_type);
+            my @auth_list;
+            foreach my $sep (@seps) {
+                push @auth_list, @{$sep->uri};
+            }
+            $authorities = \@auth_list;
         }
     }
     return $xrd;
@@ -136,8 +146,15 @@ sub _parse {
 
     my $segments = [];
     while (length $xri) {
-print "$xri\n";
-        if ($xri =~ /^$delim_rx\(/) {
+        if ($xri =~ m{^(?:/|\?|\#)}) { # FIXME: delims are repeated here and elsewhere
+            # FIXME: I'm cheating here. According to the spec, XRI
+            # path must also follow segmentation rules, so
+            # technically, I should continue parsing into
+            # segments. Sue me.
+
+            last;  # Reached the end of the authority
+        }
+        elsif ($xri =~ /^$delim_rx\(/) {
             my $delim  = _remove_first_char($xri);
             my $xref = extract_bracketed($xri, "()");
             unless (defined $xref) {
@@ -146,13 +163,13 @@ print "$xri\n";
                 );
             }
             push @$segments, $delim . $xref;
-        } elsif ($xri =~ m{^(?:/|\?|\#)}) { # FIXME: delims are repeated here and elsewhere
-            last;  # Reached the end of the authority
-        } elsif ($xri =~ s/^($delim_rx$not_delim_rx+)//) {
+        }
+        elsif ($xri =~ s/^($delim_rx$not_delim_rx+)//) {
             my $segment = $1;
             _assert_segment_ok($segment);
             push @$segments, $segment;
-        } else {
+        }
+        else {
             throw XRI::Exception::InvalidXRI(
                 "Parse error \"$xri\" in " . $self->{xri}
             );

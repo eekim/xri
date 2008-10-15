@@ -53,6 +53,7 @@ sub service_endpoints {
     my @all_services =  $self->services_by_priority;
     my @selected;
     my @default;
+    $service_match{path} =~ s/^\/// if $service_match{path};
 
     SEP: foreach my $sep (@all_services) {
         my $ss = {
@@ -85,7 +86,6 @@ sub service_endpoints {
                 elsif ($sel eq 'path') {   # 13.3.7
                     if ( $sel_h->{value} and $service_match{$sel} and
                          ($sel_h->{value} =~ /^$regexp/) ) {
-                        print "MATCH: " . $sel_h->{value} . "\n";
                         if ($sel_h->{select} and $sel_h->{select} eq 'true') {   # 13.4.2
                             push @selected, $sep;
                             next SEP;
@@ -146,7 +146,7 @@ sub service_endpoints {
         push @selected, @default if !@selected;
     }
 
-    return \@selected;
+    return @selected;
 }
 
 
