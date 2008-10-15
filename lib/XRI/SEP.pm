@@ -43,12 +43,14 @@ sub _parse_services {
             $match = $dom->findvalue('./@match') if !$match;
             $select = $dom->findvalue('./@select') if !$select;
         }
-	if ($value or $match or $select) {
-	    $SEL{$sel}->({ value => ($value) ? $value : undef,
-			   match => ($match) ? $match : undef,
-			   select => ($select) ? $select : undef });
-	    }
+        if ($value or $match or $select) {
+            my $s = {};
+            $s->{value} = $value if $value;
+            $s->{match} = $match if $match;
+            $s->{select} = $select if $select;
+            $SEL{$sel}->($s);
         }
+    }
 
     # FIXME: We're hard-coding a search for openid:Delegate, because
     # we know it's a commonly used SEP extension.  However, what we
@@ -60,8 +62,14 @@ sub _parse_services {
     my @u_doms = &xpath('xrd:URI', $s_dom);
     if (@u_doms) {
         my $u_list = [ map { &parse_priority_node($_) } @u_doms ];
-        $self->uri([ &sort_by_priority($u_list) ]);
+        my @uri_h = &sort_by_priority($u_list);
+        my @uris = map { $_->{value} } @uri_h;
+        $self->uri(\@uris);
+#        $self->uri([ &sort_by_priority($u_list) ]);
     }
+#    my @uris = map { $_->{value} } map { @{$_->{uri}} } @selected;
+#    return \@uris;
+
 }
 
 

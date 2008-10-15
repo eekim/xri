@@ -4,8 +4,10 @@ Makefile.PL
 README
 bin/xriresolve.pl
 lib/XRI.pm
+lib/XRI/SEP.pm
 lib/XRI/XRD.pm
 lib/XRI/XRDS.pm
+lib/XRI/Util.pm
 t/00-load.t
 t/pod-coverage.t
 t/pod.t
@@ -14,6 +16,7 @@ t/xrds.t
 t/lib/bad_xris.yaml
 t/lib/good_xris.yaml
 t/lib/xrds/first_stage1.xrds
+t/lib/xrds/drummond.xrds
 t/lib/xrds/priority_null.xrds
 t/lib/xrds/priority_one_local_id.xrds
 t/lib/xrds/priority_random.xrds

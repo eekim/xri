@@ -35,24 +35,28 @@ PRIORITIES_NULL: {
 PRIORITIES_SEPS: {
     my $xrds = xrds_from_file("t/lib/xrds/yadis.xrds");
     my $xrd = $xrds->last_xrd;
-    is_deeply( $xrd->services,
-	       [
-		{ priority => 10,
-          type => 'http://openid.net/signon/1.0', 
-		  uri => [ { value => 'http://www.myopenid.com/server' } ],
-		  openid_delegate => 'http://smoker.myopenid.com/'
-        },
-	    { priority => 50,
-          type => 'http://openid.net/signon/1.0',
-		  uri => [ { value => 'http://www.livejournal.com/openid/server.bml' } ],
-		  openid_delegate => 'http://www.livejournal.com/users/frank/'
-        },
-		{ priority => 20,
-          type => 'http://lid.netmesh.org/sso/2.0'
-        },
-		{ type => 'http://lid.netmesh.org/sso/1.0'
-        }
-	       ] );
+    my $services = $xrd->services;
+
+    is($services->[0]->priority, 10);
+    is_deeply($services->[0]->type, { value => 'http://openid.net/signon/1.0' });
+    is_deeply($services->[0]->uri, [ 'http://www.myopenid.com/server' ]);
+    is($services->[0]->openid_delegate, 'http://smoker.myopenid.com/');
+
+    is($services->[1]->priority, 50);
+    is_deeply($services->[1]->type, { value => 'http://openid.net/signon/1.0' });
+    is_deeply($services->[1]->uri, [ 'http://www.livejournal.com/openid/server.bml' ]);
+    is($services->[1]->openid_delegate, 'http://www.livejournal.com/users/frank/');
+
+    is($services->[2]->priority, 20);
+    is_deeply($services->[2]->type, { value => 'http://lid.netmesh.org/sso/2.0' });
+    ok(!$services->[2]->uri);
+    ok(!$services->[2]->openid_delegate);
+
+    ok(!$services->[3]->priority);
+    is_deeply($services->[3]->type, { value => 'http://lid.netmesh.org/sso/1.0' });
+    ok(!$services->[3]->uri);
+    ok(!$services->[3]->openid_delegate);
+
 }
 
 PRIORITIES_RANDOM: {
@@ -108,17 +112,43 @@ PRIORITIES_SEPS_RANDOM: {
     # See comment in PRIORITIES_RANDOM for the risk assessment of this test
     # failing (assuming the code is correct, which of course, it is).
 
-    my $joined_uris_first = join('', map { $_->{value} } @{$service->{uri}});
+    my $joined_uris_first = join('', @{$service->{uri}});
     my $is_same = 1;
     my $i = 0;
     do {
         my ($service) = $xrd->services_by_priority;
-        my $joined_uris = join '', map { $_->{value} } @{$service->{uri}};
+        my $joined_uris = join '', @{$service->{uri}};
         $is_same = 0 if ($joined_uris ne $joined_uris_first);
         $i++;
     } while ($is_same and $i < 1000);
     ok(!$is_same);
 }
+
+SEP_MATCH: {
+    my $xrds = xrds_from_file("t/lib/xrds/yadis.xrds");
+    my $xrd = $xrds->last_xrd;
+    my $sep = $xrd->service_endpoints;
+    is_deeply($sep, []);
+
+    $sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
+    isa_ok($sep->[0], 'XRI::SEP');
+    is_deeply($sep->[0]->uri,
+        [ 'http://www.myopenid.com/server' ]);
+    is_deeply($sep->[1]->uri,
+        [ 'http://www.livejournal.com/openid/server.bml' ]);
+
+    $xrds = xrds_from_file("t/lib/xrds/drummond.xrds");
+    $xrd = $xrds->last_xrd;
+    $sep = $xrd->service_endpoints(type=>'http://openid.net/signon/1.0');
+    is_deeply($sep->[0]->uri,
+        [ 'https://2idi.com/openid/',
+          'http://2idi.com/openid/' ]);
+
+    $sep = $xrd->service_endpoints(path=>'(+index)');
+    is_deeply($sep->[0]->uri,
+        [ 'http://2idi.com/forwarding/' ]);
+}
+
 
 sub xrds_from_file {
     my $file = shift;

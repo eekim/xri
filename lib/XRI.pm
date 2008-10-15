@@ -136,6 +136,7 @@ sub _parse {
 
     my $segments = [];
     while (length $xri) {
+print "$xri\n";
         if ($xri =~ /^$delim_rx\(/) {
             my $delim  = _remove_first_char($xri);
             my $xref = extract_bracketed($xri, "()");

@@ -27,7 +27,7 @@ sub canonical_id {
 sub local_ids {
     my $self = shift;
     return [ map { &parse_priority_node($_) }
-	         &xpath('xrd:LocalID|xrds:LocalID', $self->dom) ];
+             &xpath('xrd:LocalID|xrds:LocalID', $self->dom) ];
 }
 
 sub local_ids_by_priority {
@@ -35,11 +35,10 @@ sub local_ids_by_priority {
     return map { $_->{value} } &sort_by_priority($self->local_ids);
 }
 
-# FIXME: Need to store the default list of SEPs, possibly as an attribute.
 sub services {
     my $self = shift;
     return [ map { XRI::SEP->new(dom => $_) }
-	         &xpath('xrd:Service', $self->dom) ];
+             &xpath('xrd:Service', $self->dom) ];
 }
 
 sub services_by_priority {
@@ -68,20 +67,13 @@ sub service_endpoints {
         );
         foreach my $sel ('path', 'type', 'media_type') {
             my $sel_h = $sep_sel{$sel}->();
+            my $regexp = quotemeta($service_match{$sel}) if $service_match{$sel};
+
             if ($sel_h) {
-                if ( ($sel_h->{match} eq 'any') or
-                     ($sel_h->{match} eq 'non-null' and $sel_h->{value}) or
-                     ($sel_h->{match} eq 'null' and !defined $sel_h->{value}) or
-                     (!$sel_h->{match} and !$sel_h->{value})   # 13.3.4
-                   ) {   # 13.3.2
-                    $ss->{$sel}->{positive} = 1;
-                }
-                elsif ($sel_h->{match} eq 'default') {   # 13.3.1
-                    $ss->{$sel}->{default} = 1;
-                }
-                elsif ($sel eq 'type' or $sel eq 'media_type') {   # 13.3.6|8
-                    if ($sel_h->{value} eq $service_match{$sel}) {
-                        if ($sel_h->{select} eq 'true') {   # 13.4.2
+                if ($sel eq 'type' or $sel eq 'media_type') {   # 13.3.6|8
+                    if ( $sel_h->{value} and $service_match{$sel} and
+                         ($sel_h->{value} eq $service_match{$sel}) ) {
+                        if ($sel_h->{select} and $sel_h->{select} eq 'true') {   # 13.4.2
                             push @selected, $sep;
                             next SEP;
                         }
@@ -91,8 +83,10 @@ sub service_endpoints {
                     }
                 }
                 elsif ($sel eq 'path') {   # 13.3.7
-                    if ($sel_h->{value} =~ /^$service_match{$sel}/) {
-                        if ($sel_h->{select} eq 'true') {   # 13.4.2
+                    if ( $sel_h->{value} and $service_match{$sel} and
+                         ($sel_h->{value} =~ /^$regexp/) ) {
+                        print "MATCH: " . $sel_h->{value} . "\n";
+                        if ($sel_h->{select} and $sel_h->{select} eq 'true') {   # 13.4.2
                             push @selected, $sep;
                             next SEP;
                         }
@@ -100,6 +94,17 @@ sub service_endpoints {
                             $ss->{$sel}->{positive} = 1;
                         }
                     }
+                }
+                if ( ( $sel_h->{match} and
+                       ( ($sel_h->{match} eq 'any') or
+                         ($sel_h->{match} eq 'non-null' and $sel_h->{value}) or
+                         ($sel_h->{match} eq 'null' and !$service_match{$sel}) ) )
+                     or (!$sel_h->{match} and !$sel_h->{value})   # 13.3.4
+                   ) {   # 13.3.2
+                    $ss->{$sel}->{positive} = 1;
+                }
+                elsif ($sel_h->{match} and $sel_h->{match} eq 'default') {   # 13.3.1
+                    $ss->{$sel}->{default} = 1;
                 }
             }
             else {   # 13.3.3
@@ -141,8 +146,7 @@ sub service_endpoints {
         push @selected, @default if !@selected;
     }
 
-    my @uris = map { $_->{value} } map { @{$_->{uri}} } @selected;
-    return \@uris;
+    return \@selected;
 }
 
 
@@ -203,29 +207,20 @@ of equal priority are randomly sorted.
 
 =head2 services( )
 
-Returns the XRI's Services in the order listed in the XRD.  We should
-probably make this a private method, as you should almomst always use
-either services_by_priority() or service_endpoints().
-
-Returns a list reference of hash references:
-
-    [ { type => $type,
-        priority => $priority,
-        uri => [ { value => $value, priority => $priority }, ... ]
-      }, ... ]
+Returns a list of XRI::SEP objects in the order listed in the XRD.  We
+should probably make this a private method, as you should almost
+always use either services_by_priority() or service_endpoints().
 
 =head2 services_by_priority( )
 
-Returns a list of Service hash references in order of priority.  This
-will not necessarily return the same list each time it's called,
-because items of equal priority are randomly sorted.
+Returns a list of XRI::SEP objects in order of priority.  This will
+not necessarily return the same list each time it's called, because
+items of equal priority are randomly sorted.
 
-=head2 service_endpoints ( $service_type )
+=head2 service_endpoints ( path => $p, type => $t, media_type => $m )
 
-Returns a list reference of URIs corresponding to the service of
-$service_type:
-
-    [ $uri, $uri, ... ]
+Returns a list of XRD::SEP objects corresponding to the parameters
+passed.
 
 =head1 ACCESSORS / MUTATORS
 

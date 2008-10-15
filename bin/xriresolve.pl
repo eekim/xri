@@ -88,7 +88,7 @@ sub print_xrd {
 	print '</table>' if $is_cgi;
         print "<ul>\n" if ($service->uri and $is_cgi);
         foreach my $uri (@{$service->uri}) {
-            &print_attr('URI', $uri->{value});
+            &print_attr('URI', $uri);
         }
         print "</ul>" if ($service->uri and $is_cgi);
         print "\n";
